@@ -18,8 +18,8 @@ st.write("Trouvez des entreprises autour d’un point GPS.")
 
 # Champs de saisie
 type_place_fr = st.text_input("Que recherches-tu ? (ex: restaurant, hôtel, cinéma, etc.)")
-latitude = st.number_input("Latitude", value=48.8566)
-longitude = st.number_input("Longitude", value=2.3522)
+latitude = st.number_input("Entrez la latitude du point GPS :", format="%.6f")
+longitude = st.number_input("Entrez la longitude du point GPS :", format="%.6f")
 radius = st.slider("Rayon de recherche (mètres)", min_value=100, max_value=5000, value=1000)
 filter_contact = st.checkbox("Seulement avec téléphone ou site web")
 
