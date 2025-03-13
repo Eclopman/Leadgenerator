@@ -13,6 +13,11 @@ if "authenticated" not in st.session_state:
 st.sidebar.title("🔒 Connexion")
 
 if not st.session_state.authenticated:
+    # Vérifier si les secrets existent
+    if "USERNAME" not in st.secrets or "PASSWORD" not in st.secrets:
+        st.sidebar.error("⚠ Erreur : Identifiants non configurés dans Streamlit Secrets.")
+        st.stop()
+
     user_input = st.sidebar.text_input("Identifiant", value="", type="default")
     password_input = st.sidebar.text_input("Mot de passe", value="", type="password")
 
@@ -20,6 +25,7 @@ if not st.session_state.authenticated:
         if user_input == st.secrets["USERNAME"] and password_input == st.secrets["PASSWORD"]:
             st.session_state.authenticated = True
             st.sidebar.success("✅ Connexion réussie !")
+            st.experimental_rerun()  # Recharge la page après connexion
         else:
             st.sidebar.error("❌ Identifiant ou mot de passe incorrect.")
 
@@ -28,6 +34,11 @@ if not st.session_state.authenticated:
 # ---- CONFIGURATION ----
 st.title("Lead Generator 📍")
 st.write("Trouvez des entreprises autour d’un point GPS.")
+
+# Vérifier si l'API Key est configurée
+if "API_KEY" not in st.secrets:
+    st.error("⚠ Erreur : Clé API manquante. Configure-la dans Streamlit Secrets.")
+    st.stop()
 
 API_KEY = st.secrets["API_KEY"]
 BASE_URL_NEARBY = "https://places.googleapis.com/v1/places:searchNearby"
@@ -121,6 +132,9 @@ if st.button("Lancer la recherche"):
         # Générer un fichier Excel
         excel_filename = "google_places_results.xlsx"
         df.to_excel(excel_filename, index=False)
-        st.download_button(label="📥 Télécharger les résultats", data=open(excel_filename, "rb"), file_name=excel_filename)
+
+        with open(excel_filename, "rb") as f:
+            st.download_button(label="📥 Télécharger les résultats", data=f, file_name=excel_filename)
+
     else:
         st.warning("⚠ Aucune donnée trouvée. Vérifie tes paramètres ou ton quota API.")
