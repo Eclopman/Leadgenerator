@@ -7,8 +7,10 @@ import random
 from googletrans import Translator
 
 # ---- CONFIGURATION ----
-import os
-API_KEY = os.getenv("GOOGLE_API_KEY") # Remplace par ta clé Google Places API
+import streamlit as st
+
+API_KEY = st.secrets["API_KEY"]
+
 BASE_URL_NEARBY = "https://places.googleapis.com/v1/places:searchNearby"
 BASE_URL_TEXT = "https://places.googleapis.com/v1/places:searchText"
 translator = Translator()
