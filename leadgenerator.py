@@ -25,7 +25,7 @@ if not st.session_state.authenticated:
         if user_input == st.secrets["USERNAME"] and password_input == st.secrets["PASSWORD"]:
             st.session_state.authenticated = True
             st.sidebar.success("✅ Connexion réussie !")
-            st.experimental_rerun()  # Recharge la page après connexion
+            st.rerun()  # Recharge la page après connexion # Recharge la page après connexion
         else:
             st.sidebar.error("❌ Identifiant ou mot de passe incorrect.")
 
