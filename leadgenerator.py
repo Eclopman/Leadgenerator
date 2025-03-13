@@ -6,18 +6,33 @@ import threading
 import random
 from googletrans import Translator
 
+# ---- AUTHENTIFICATION ----
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+st.sidebar.title("🔒 Connexion")
+
+if not st.session_state.authenticated:
+    user_input = st.sidebar.text_input("Identifiant", value="", type="default")
+    password_input = st.sidebar.text_input("Mot de passe", value="", type="password")
+
+    if st.sidebar.button("Se connecter"):
+        if user_input == st.secrets["USERNAME"] and password_input == st.secrets["PASSWORD"]:
+            st.session_state.authenticated = True
+            st.sidebar.success("✅ Connexion réussie !")
+        else:
+            st.sidebar.error("❌ Identifiant ou mot de passe incorrect.")
+
+    st.stop()  # Bloque l'accès tant que l'utilisateur n'est pas connecté
+
 # ---- CONFIGURATION ----
-import streamlit as st
+st.title("Lead Generator 📍")
+st.write("Trouvez des entreprises autour d’un point GPS.")
 
 API_KEY = st.secrets["API_KEY"]
-
 BASE_URL_NEARBY = "https://places.googleapis.com/v1/places:searchNearby"
 BASE_URL_TEXT = "https://places.googleapis.com/v1/places:searchText"
 translator = Translator()
-
-# ---- INTERFACE STREAMLIT ----
-st.title("Lead Generator 📍")
-st.write("Trouvez des entreprises autour d’un point GPS.")
 
 # Champs de saisie
 type_place_fr = st.text_input("Que recherches-tu ? (ex: restaurant, hôtel, cinéma, etc.)")
