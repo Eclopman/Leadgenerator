@@ -7,7 +7,7 @@ import random
 from googletrans import Translator
 
 # ---- CONFIGURATION ----
-API_KEY = "TA_CLE_API_ICI"  # Remplace par ta clé Google Places API
+API_KEY = "AIzaSyDPsW5m2k9nrY-uKFGGtrVrxxNc_AuOjEQ"  # Remplace par ta clé Google Places API
 BASE_URL_NEARBY = "https://places.googleapis.com/v1/places:searchNearby"
 BASE_URL_TEXT = "https://places.googleapis.com/v1/places:searchText"
 translator = Translator()
