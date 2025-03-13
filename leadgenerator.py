@@ -13,7 +13,6 @@ if "authenticated" not in st.session_state:
 st.sidebar.title("🔒 Connexion")
 
 if not st.session_state.authenticated:
-    # Vérifier si les secrets existent
     if "USERNAME" not in st.secrets or "PASSWORD" not in st.secrets:
         st.sidebar.error("⚠ Erreur : Identifiants non configurés dans Streamlit Secrets.")
         st.stop()
@@ -25,17 +24,16 @@ if not st.session_state.authenticated:
         if user_input == st.secrets["USERNAME"] and password_input == st.secrets["PASSWORD"]:
             st.session_state.authenticated = True
             st.sidebar.success("✅ Connexion réussie !")
-            st.rerun()  # Recharge la page après connexion # Recharge la page après connexion
+            st.rerun()
         else:
             st.sidebar.error("❌ Identifiant ou mot de passe incorrect.")
 
-    st.stop()  # Bloque l'accès tant que l'utilisateur n'est pas connecté
+    st.stop()
 
 # ---- CONFIGURATION ----
 st.title("Lead Generator 📍")
 st.write("Trouvez des entreprises autour d’un point GPS.")
 
-# Vérifier si l'API Key est configurée
 if "API_KEY" not in st.secrets:
     st.error("⚠ Erreur : Clé API manquante. Configure-la dans Streamlit Secrets.")
     st.stop()
@@ -52,7 +50,6 @@ longitude = st.number_input("Entrez la longitude du point GPS :", format="%.6f")
 radius = st.slider("Rayon de recherche (mètres)", min_value=100, max_value=5000, value=1000)
 filter_contact = st.checkbox("Seulement avec téléphone ou site web")
 
-# Bouton de recherche
 if st.button("Lancer la recherche"):
     type_place_en = translator.translate(type_place_fr, src='fr', dest='en').text.lower()
     st.write(f"🔍 Recherche pour : {type_place_en}")
@@ -63,8 +60,8 @@ if st.button("Lancer la recherche"):
         "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.websiteUri"
     }
 
-    def get_places(lat, lon, radius, results, search_type):
-        """ Effectue une requête Nearby ou Text Search et récupère les résultats. """
+    def get_places(lat, lon, radius, results, seen_places, search_type):
+        """ Effectue une requête Nearby ou Text Search et récupère les résultats sans doublon. """
         payload = {"maxResultCount": 20}
 
         if search_type == "nearby":
@@ -86,6 +83,7 @@ if st.button("Lancer la recherche"):
 
             for place in data.get("places", []):
                 name = place.get("displayName", {}).get("text", "N/A")
+                address = place.get("formattedAddress", "N/A")  # On utilise l'adresse pour éviter les doublons
                 lat = place.get("location", {}).get("latitude", "N/A")
                 lon = place.get("location", {}).get("longitude", "N/A")
                 phone = place.get("nationalPhoneNumber", "N/A")
@@ -94,7 +92,11 @@ if st.button("Lancer la recherche"):
                 if filter_contact and phone == "N/A" and website == "N/A":
                     continue
 
-                results.append([name, phone, website, lat, lon])
+                place_identifier = (name, address)  # Identifiant unique basé sur le nom et l'adresse
+
+                if place_identifier not in seen_places:
+                    seen_places.add(place_identifier)
+                    results.append([name, address, phone, website, lat, lon])
 
             time.sleep(0.2)
         except Exception as e:
@@ -102,6 +104,7 @@ if st.button("Lancer la recherche"):
 
     # Lancer la recherche
     places = []
+    seen_places = set()  # Set pour stocker les lieux déjà ajoutés
     step = radius / 12  
     offset_lat = step / 111320
     offset_lon = step / (40075000 * abs(latitude) / 360)
@@ -113,12 +116,12 @@ if st.button("Lancer la recherche"):
     threads = []
 
     for lat, lon in grid_points:
-        t = threading.Thread(target=get_places, args=(lat, lon, step, places, "nearby"))
+        t = threading.Thread(target=get_places, args=(lat, lon, step, places, seen_places, "nearby"))
         t.start()
         threads.append(t)
 
     for lat, lon in grid_points:
-        t = threading.Thread(target=get_places, args=(lat, lon, step, places, "text"))
+        t = threading.Thread(target=get_places, args=(lat, lon, step, places, seen_places, "text"))
         t.start()
         threads.append(t)
 
@@ -126,7 +129,7 @@ if st.button("Lancer la recherche"):
         t.join()
 
     if places:
-        df = pd.DataFrame(places, columns=["Nom", "Téléphone", "Site Web", "Latitude", "Longitude"])
+        df = pd.DataFrame(places, columns=["Nom", "Adresse", "Téléphone", "Site Web", "Latitude", "Longitude"])
         st.write(df)
 
         # Générer un fichier Excel
